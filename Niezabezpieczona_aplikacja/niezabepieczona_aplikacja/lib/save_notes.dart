@@ -16,6 +16,16 @@ class _SaveNotesState extends State<SaveNotes> {
   // Funkcja do zapisywania notatki na serwerze oraz lokalnie
   Future<void> saveNote() async {
     final token = await _getToken(); // Pobierz token z SharedPreferences
+    print("Token: $token"); // Logowanie tokena
+
+    final noteText = noteController.text.trim(); // Trimuje białe znaki
+    if (noteText.isEmpty) {
+      // Jeśli notatka jest pusta, wyświetl komunikat o błędzie
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note cannot be empty!')),
+      );
+      return;
+    }
 
     final url = Uri.parse('http://192.168.100.117:5000/api/data');
     try {
@@ -25,12 +35,16 @@ class _SaveNotesState extends State<SaveNotes> {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token', // Dodaj token w nagłówku
         },
-        body: jsonEncode({'data': noteController.text}),
+        body: jsonEncode({'note': noteText}),
       );
+
+      // Logowanie odpowiedzi serwera
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         // Zapisz notatkę lokalnie
-        saveNoteLocally(noteController.text);
+        saveNoteLocally(noteText);
 
         // Wyczyść pole tekstowe po zapisaniu
         setState(() {
@@ -44,7 +58,7 @@ class _SaveNotesState extends State<SaveNotes> {
       } else {
         // Obsługa błędu autoryzacji
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unauthorized!')),
+          SnackBar(content: Text('Error: ${response.statusCode}')),
         );
       }
     } catch (e) {

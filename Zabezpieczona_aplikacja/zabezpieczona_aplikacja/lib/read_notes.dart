@@ -23,6 +23,7 @@ class _ReadNotesState extends State<ReadNotes> {
     fetchNotesFromServer();
   }
 
+  // Funkcja do uzyskania klienta HTTP z certyfikatem
   Future<IOClient> getClientWithCert() async {
     final certData = await DefaultAssetBundle.of(context).load('cert.pem');
     final securityContext = SecurityContext(withTrustedRoots: false);
@@ -33,8 +34,7 @@ class _ReadNotesState extends State<ReadNotes> {
         const expectedFingerprint =
             'a4cb2c79cd6d5262a567090c31d2dfa4f90c43b37b92c14aad374c234f57cc6c';
         final fingerprint = sha256.convert(cert.der).toString();
-        print(
-            'Certificate fingerprint: $fingerprint'); // Debugowanie fingerprintu
+        print('Certificate fingerprint: $fingerprint');
         if (fingerprint != expectedFingerprint) {
           print('MITM attack detected: $host');
           return false;
@@ -45,27 +45,28 @@ class _ReadNotesState extends State<ReadNotes> {
     return IOClient(httpClient);
   }
 
+  // Funkcja do pobierania tokena z secure storage
   Future<String> _getToken() async {
     String? token = await _secureStorage.read(key: 'token');
-    print('Token retrieved: $token'); // Debugowanie tokenu
+    print('Token retrieved: $token');
     return token ?? '';
   }
 
+  // Funkcja do pobierania notatek z serwera
   Future<void> fetchNotesFromServer() async {
     final url = Uri.parse('https://192.168.100.117:5000/api/data');
     try {
       final client = await getClientWithCert();
       final token = await _getToken();
-      print('Using token: $token'); // Debugowanie tokenu
+      print('Using token: $token');
 
       final response = await client.get(
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      print(
-          'Response status: ${response.statusCode}'); // Debugowanie statusu odpowiedzi
-      print('Response body: ${response.body}'); // Debugowanie treści odpowiedzi
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -78,12 +79,11 @@ class _ReadNotesState extends State<ReadNotes> {
 
         await _secureStorage.write(key: 'notes', value: jsonEncode(notes));
       } else {
-        print(
-            'Failed to fetch notes: ${response.statusCode}'); // Debugowanie błędu
+        print('Failed to fetch notes: ${response.statusCode}');
         throw Exception('Failed to fetch notes: ${response.statusCode}');
       }
     } catch (e) {
-      print('Exception occurred: $e'); // Debugowanie wyjątków
+      print('Exception occurred: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Error fetching notes. Please try again later.')),
@@ -91,12 +91,97 @@ class _ReadNotesState extends State<ReadNotes> {
     }
   }
 
+  // Funkcja do ładowania notatek lokalnych z secure storage
   Future<void> fetchNotesLocally() async {
     String storedNotes = await _secureStorage.read(key: 'notes') ?? '[]';
-    print('Fetched local notes: $storedNotes'); // Debugowanie lokalnych notatek
+    print('Fetched local notes: $storedNotes');
     setState(() {
       notes = List<String>.from(jsonDecode(storedNotes));
     });
+  }
+
+  // Funkcja do synchronizacji notatek lokalnych z serwerem
+  Future<void> syncLocalNotesWithServer(List<String> serverNotes) async {
+    // Sprawdzenie notatek lokalnych, które nie są na serwerze
+    List<String> localNotesNotOnServer =
+        notes.where((note) => !serverNotes.contains(note)).toList();
+
+    for (var note in localNotesNotOnServer) {
+      await addNoteToServer(note);
+    }
+
+    // Sprawdzenie notatek z serwera, które nie są lokalnie
+    List<String> serverNotesNotOnDevice =
+        serverNotes.where((note) => !notes.contains(note)).toList();
+
+    setState(() {
+      notes.addAll(serverNotesNotOnDevice);
+    });
+
+    await _secureStorage.write(key: 'notes', value: jsonEncode(notes));
+  }
+
+  // Funkcja do dodawania notatki na serwer
+  Future<void> addNoteToServer(String note) async {
+    final token = await _getToken();
+
+    final url = Uri.parse('https://192.168.100.117:5000/api/data');
+    try {
+      final client = await getClientWithCert();
+      final response = await client.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'message': note}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Note added to server');
+      } else {
+        print('Failed to add note to server');
+      }
+    } catch (e) {
+      print('Exception: $e');
+    }
+  }
+
+  // Funkcja do usuwania notatki z serwera oraz lokalnie
+  Future<void> deleteNoteFromServer(String note) async {
+    final token = await _getToken();
+
+    final url = Uri.parse('https://192.168.100.117:5000/api/data/$note');
+    try {
+      final client = await getClientWithCert();
+      final response = await client.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Usuwamy notatkę lokalnie po jej usunięciu z serwera
+        setState(() {
+          notes.remove(note); // Usuń notatkę z listy
+        });
+
+        // Zaktualizuj secure storage po usunięciu notatki
+        String updatedNotes = jsonEncode(notes);
+        await _secureStorage.write(key: 'notes', value: updatedNotes);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Note deleted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete note!')),
+        );
+      }
+    } catch (e) {
+      print('Exception: $e');
+    }
   }
 
   @override
@@ -108,12 +193,19 @@ class _ReadNotesState extends State<ReadNotes> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: notes.isEmpty
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: Text('Brak notatek'))
             : ListView.builder(
                 itemCount: notes.length,
                 itemBuilder: (context, index) {
                   return ListTile(
                     title: Text(notes[index]),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        // Wywołaj funkcję usuwania notatki
+                        deleteNoteFromServer(notes[index]);
+                      },
+                    ),
                   );
                 },
               ),
