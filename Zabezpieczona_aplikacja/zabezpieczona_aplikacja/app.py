@@ -30,6 +30,7 @@ def get_data():
     token = request.headers.get('Authorization')
     if is_valid_user_agent():
         temp_token = token
+
     if not temp_token:
         return jsonify({"error": "Token missing"}), 400
     
@@ -65,6 +66,7 @@ def save_data():
     token = request.headers.get('Authorization')
     if is_valid_user_agent():
         temp_token = token
+
     if not temp_token:
         return jsonify({"error": "Token missing"}), 400
     
@@ -91,4 +93,4 @@ def save_data():
     return jsonify({"message": "Data saved successfully!"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, ssl_context=('cert.pem', 'private_key.pem'))

@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:Mobile_application_security_Project/read_notes.dart';
-import 'package:Mobile_application_security_Project/save_notes.dart';
+import 'package:mobile_application_security_Project/read_notes.dart';
+import 'package:mobile_application_security_Project/save_notes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Generowanie nowego tokena przy każdym uruchomieniu aplikacji
+  await generateNewToken();
   runApp(const MyApp());
+}
+
+// Generuje nowy token i zapisuje go w SharedPreferences
+Future<void> generateNewToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  final newToken = Uuid().v4(); // Generowanie unikalnego tokena
+  await prefs.setString(
+      'token', newToken); // Zapisanie tokena w SharedPreferences
+  print('New token generated: $newToken');
 }
 
 class MyApp extends StatelessWidget {

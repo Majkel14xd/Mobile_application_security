@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
-import 'read_notes.dart';
-import 'save_notes.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobile_application_security_Project/read_notes.dart';
+import 'package:mobile_application_security_Project/save_notes.dart';
+import 'package:uuid/uuid.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Generowanie nowego tokena przy każdym uruchomieniu aplikacji
+  await generateNewToken();
   runApp(const MyApp());
+}
+
+// Flutter Secure Storage instance
+final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+
+// Generuje nowy token i zapisuje go w FlutterSecureStorage
+Future<void> generateNewToken() async {
+  final newToken = Uuid().v4(); // Generowanie unikalnego tokena
+  await secureStorage.write(key: 'token', value: newToken); // Zapisanie tokena
+  print('New token generated: $newToken');
 }
 
 class MyApp extends StatelessWidget {
@@ -24,7 +39,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Secure Communication'),
+        title: const Text('Secure Notes'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -35,8 +50,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const ReadNotesScreen()),
+                  MaterialPageRoute(builder: (context) => const ReadNotes()),
                 );
               },
               child: const Text('Read Notes'),
@@ -46,8 +60,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const SaveNotesScreen()),
+                  MaterialPageRoute(builder: (context) => const SaveNotes()),
                 );
               },
               child: const Text('Save Notes'),
