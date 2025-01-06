@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/io_client.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ReadNotes extends StatefulWidget {
   const ReadNotes({super.key});
@@ -25,14 +26,14 @@ class _ReadNotesState extends State<ReadNotes> {
 
   // Funkcja do uzyskania klienta HTTP z certyfikatem
   Future<IOClient> getClientWithCert() async {
-    final certData = await DefaultAssetBundle.of(context).load('cert.pem');
+    final certData =
+        await DefaultAssetBundle.of(context).load('Certs/cert.pem');
     final securityContext = SecurityContext(withTrustedRoots: false);
     securityContext.setTrustedCertificatesBytes(certData.buffer.asUint8List());
 
     final httpClient = HttpClient(context: securityContext)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        const expectedFingerprint =
-            'a4cb2c79cd6d5262a567090c31d2dfa4f90c43b37b92c14aad374c234f57cc6c';
+        final expectedFingerprint = dotenv.env['EXPECTED_FINGERPRINT'];
         final fingerprint = sha256.convert(cert.der).toString();
         print('Certificate fingerprint: $fingerprint');
         if (fingerprint != expectedFingerprint) {

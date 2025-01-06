@@ -3,10 +3,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_application_security_Project/read_notes.dart';
 import 'package:mobile_application_security_Project/save_notes.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Generowanie nowego tokena przy każdym uruchomieniu aplikacji
+  await dotenv.load(fileName: ".env");
   await generateNewToken();
   runApp(const MyApp());
 }

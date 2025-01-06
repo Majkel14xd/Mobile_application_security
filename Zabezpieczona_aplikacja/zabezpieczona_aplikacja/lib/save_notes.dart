@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/io_client.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SaveNotes extends StatefulWidget {
   const SaveNotes({super.key});
@@ -18,15 +19,15 @@ class _SaveNotesState extends State<SaveNotes> {
 
   // Method to configure the HTTP client with SSL certificate pinning
   Future<IOClient> getClientWithCert() async {
-    final certData = await DefaultAssetBundle.of(context).load('cert.pem');
+    final certData =
+        await DefaultAssetBundle.of(context).load('Certs/cert.pem');
     final securityContext = SecurityContext(withTrustedRoots: false);
     securityContext.setTrustedCertificatesBytes(certData.buffer.asUint8List());
 
     final httpClient = HttpClient(context: securityContext)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         // Certificate pinning logic
-        const expectedFingerprint =
-            'a4cb2c79cd6d5262a567090c31d2dfa4f90c43b37b92c14aad374c234f57cc6c';
+        final expectedFingerprint = dotenv.env['EXPECTED_FINGERPRINT'];
         final fingerprint = sha256.convert(cert.der).toString();
         if (fingerprint != expectedFingerprint) {
           print('MITM attack detected: $host');

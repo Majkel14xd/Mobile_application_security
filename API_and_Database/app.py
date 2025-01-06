@@ -130,5 +130,5 @@ def delete_data(note):
     return jsonify({"message": f"Data with note '{note}' deleted successfully!"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-    #app.run(host='0.0.0.0', port=5000, ssl_context=('cert.pem', 'private_key.pem'))
+    #app.run(host='0.0.0.0', port=5000,debug=True)
+    app.run(host='0.0.0.0', port=5000, ssl_context=('Certs/cert.pem', 'Certs/private_key.pem'),debug=True)
