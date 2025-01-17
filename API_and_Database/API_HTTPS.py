@@ -14,7 +14,7 @@ saved_token = None
 def is_dart_user_agent():
     """Sprawdza, czy żądanie pochodzi z aplikacji Dart."""
     user_agent = request.headers.get('User-Agent')
-    return user_agent == "Dart/3.5 (dart:io)"
+    return user_agent == "Dart/3.6 (dart:io)"
 
 def get_token():
     """Pobiera token z nagłówka Authorization."""
