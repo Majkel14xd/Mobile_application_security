@@ -17,7 +17,7 @@ class _SaveNotesState extends State<SaveNotes> {
   TextEditingController noteController = TextEditingController();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // Method to configure the HTTP client with SSL certificate pinning
+  // konfiguracja klienta http z SLL certificate pinning
   Future<IOClient> getClientWithCert() async {
     final certData =
         await DefaultAssetBundle.of(context).load('Certs/cert.pem');
@@ -26,25 +26,24 @@ class _SaveNotesState extends State<SaveNotes> {
 
     final httpClient = HttpClient(context: securityContext)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        // Certificate pinning logic
+        // logika certificate pinning
         final expectedFingerprint = dotenv.env['EXPECTED_FINGERPRINT'];
         final fingerprint = sha256.convert(cert.der).toString();
         if (fingerprint != expectedFingerprint) {
           print('MITM attack detected: $host');
-          return false; // Block connection if fingerprint doesn't match
+          return false; // blok jak fingerprinty sie nie zgadzaja
         }
-        return true; // Accept valid certificate
+        return true; // przyjecie zgodnego certyfikatu
       };
 
     return IOClient(httpClient);
   }
 
-  // Method to retrieve the saved token for authentication
+  // pobranie tokenu z secureStorage
   Future<String?> _getToken() async {
     return await _secureStorage.read(key: 'token');
   }
 
-  // Method to save a note to the server and store it locally
   Future<void> saveNote() async {
     final token = await _getToken();
     if (token == null) {

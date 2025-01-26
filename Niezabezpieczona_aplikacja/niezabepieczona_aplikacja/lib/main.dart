@@ -6,17 +6,16 @@ import 'package:uuid/uuid.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Generowanie nowego tokena przy każdym uruchomieniu aplikacji
+  // kazde uruchomienie musi miec nowy token
   await generateNewToken();
   runApp(const MyApp());
 }
 
-// Generuje nowy token i zapisuje go w SharedPreferences
+// generowanie tokenu i zapis w SharedPreferences
 Future<void> generateNewToken() async {
   final prefs = await SharedPreferences.getInstance();
-  final newToken = Uuid().v4(); // Generowanie unikalnego tokena
-  await prefs.setString(
-      'token', newToken); // Zapisanie tokena w SharedPreferences
+  final newToken = Uuid().v4(); // generowanie tokenu
+  await prefs.setString('token', newToken); // zapis
   print('New token generated: $newToken');
 }
 

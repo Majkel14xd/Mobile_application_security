@@ -16,11 +16,10 @@ class _ReadNotesState extends State<ReadNotes> {
   @override
   void initState() {
     super.initState();
-    loadLocalNotes(); // Załaduj notatki lokalnie
-    fetchNotes(); // Pobierz notatki z serwera
+    loadLocalNotes(); // zaladowanie notatek lokalnych
+    fetchNotes(); // pobranie notatek z serwera
   }
 
-  // Funkcja do ładowania lokalnych notatek
   Future<void> loadLocalNotes() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? localNotes = prefs.getStringList('notes');
@@ -31,16 +30,15 @@ class _ReadNotesState extends State<ReadNotes> {
     }
   }
 
-  // Funkcja do pobierania notatek z serwera
   Future<void> fetchNotes() async {
-    final token = await _getToken(); // Pobierz token z SharedPreferences
+    final token = await _getToken();
 
     final url = Uri.parse('http://192.168.100.117:5000/api/data');
     try {
       final response = await http.get(
         url,
         headers: {
-          'Authorization': 'Bearer $token', // Dodaj token w nagłówku
+          'Authorization': 'Bearer $token', // dodanie tokena do naglowka
         },
       );
 
@@ -50,14 +48,13 @@ class _ReadNotesState extends State<ReadNotes> {
             data.map((item) => item['message'] ?? 'No message'));
 
         setState(() {
-          // Dodaj tylko nowe notatki z serwera, które jeszcze nie są zapisane lokalnie
+          // dodanie nowych notatek z serwera
           notes.addAll(serverNotes.where((note) => !notes.contains(note)));
         });
 
-        // Synchronizuj lokalne notatki z serwerem
         syncLocalNotesWithServer(serverNotes);
       } else {
-        // Obsługa błędu autoryzacji
+        // blad autoryzacji
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Unauthorized!')),
         );
@@ -67,43 +64,37 @@ class _ReadNotesState extends State<ReadNotes> {
     }
   }
 
-  // Funkcja do pobrania tokena z SharedPreferences
+  // pobranie tokenu z SharedPreferences
   Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
     return token;
   }
 
-  // Funkcja do synchronizowania lokalnych notatek z serwerem
   Future<void> syncLocalNotesWithServer(List<String> serverNotes) async {
     final prefs = await SharedPreferences.getInstance();
     // Zapisz wszystkie notatki, w tym te z serwera
     await prefs.setStringList('notes', notes);
 
-    // 1. Sprawdzenie, czy są notatki lokalne, które nie istnieją na serwerze
+    // sprawdzenie czy sa notatki lokalne,ktorych nie ma na serwerze i na odwrot
     List<String> localNotesNotOnServer =
         notes.where((note) => !serverNotes.contains(note)).toList();
-
     for (var note in localNotesNotOnServer) {
       await addNoteToServer(note); // Dodaj lokalną notatkę na serwer
     }
-
-    // 2. Sprawdzenie, czy są notatki na serwerze, których nie ma lokalnie
     List<String> serverNotesNotOnDevice =
         serverNotes.where((note) => !notes.contains(note)).toList();
-
     setState(() {
-      // Dodaj notatki z serwera, które nie były zapisane lokalnie
+      // dodanie serwerowych notatek
       notes.addAll(serverNotesNotOnDevice);
     });
 
-    // Zaktualizuj lokalne notatki po synchronizacji
+    // aktualizacja lokalnych po synchronizacji
     await prefs.setStringList('notes', notes);
   }
 
-  // Funkcja do dodawania notatki na serwer
   Future<void> addNoteToServer(String note) async {
-    final token = await _getToken(); // Pobierz token z SharedPreferences
+    final token = await _getToken();
 
     final url = Uri.parse('http://192.168.100.117:5000/api/data');
     try {
@@ -126,9 +117,8 @@ class _ReadNotesState extends State<ReadNotes> {
     }
   }
 
-  // Funkcja do usuwania notatki z serwera oraz lokalnie
   Future<void> deleteNoteFromServer(String note) async {
-    final token = await _getToken(); // Pobierz token z SharedPreferences
+    final token = await _getToken();
 
     final url = Uri.parse('http://192.168.100.117:5000/api/data/$note');
     try {
@@ -140,12 +130,11 @@ class _ReadNotesState extends State<ReadNotes> {
       );
 
       if (response.statusCode == 200) {
-        // Usuwamy notatkę lokalnie po jej usunięciu z serwera
         setState(() {
           notes.remove(note); // Usuń notatkę z listy
         });
 
-        // Zaktualizuj SharedPreferences po usunięciu notatki lokalnie
+        // aktualizacja SharedPreferences po usunięciu notatki lokalnie
         final prefs = await SharedPreferences.getInstance();
         List<String> updatedNotes = prefs.getStringList('notes') ?? [];
         updatedNotes.remove(note);
@@ -182,7 +171,6 @@ class _ReadNotesState extends State<ReadNotes> {
                     trailing: IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () {
-                        // Wywołaj funkcję usuwania notatki
                         deleteNoteFromServer(notes[index]);
                       },
                     ),

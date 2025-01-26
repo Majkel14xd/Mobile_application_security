@@ -7,19 +7,20 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Generowanie nowego tokena przy każdym uruchomieniu aplikacji
+  // kazde uruchomienie musi miec nowy token
   await dotenv.load(fileName: ".env");
   await generateNewToken();
   runApp(const MyApp());
 }
 
-// Flutter Secure Storage instance
+// instancja secureStorage
 final FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
-// Generuje nowy token i zapisuje go w FlutterSecureStorage
+// generowanie tokenu
 Future<void> generateNewToken() async {
-  final newToken = Uuid().v4(); // Generowanie unikalnego tokena
-  await secureStorage.write(key: 'token', value: newToken); // Zapisanie tokena
+  final newToken = Uuid().v4();
+  await secureStorage.write(
+      key: 'token', value: newToken); // zapis tokenu z secure storage
   print('New token generated: $newToken');
 }
 

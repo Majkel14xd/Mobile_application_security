@@ -13,14 +13,13 @@ class SaveNotes extends StatefulWidget {
 class _SaveNotesState extends State<SaveNotes> {
   TextEditingController noteController = TextEditingController();
 
-  // Funkcja do zapisywania notatki na serwerze oraz lokalnie
   Future<void> saveNote() async {
-    final token = await _getToken(); // Pobierz token z SharedPreferences
-    print("Token: $token"); // Logowanie tokena
+    final token = await _getToken();
+    print("Token: $token"); // loging tokena
 
-    final noteText = noteController.text.trim(); // Trimuje białe znaki
+    final noteText = noteController.text.trim(); // usuniecie bialych znakow
     if (noteText.isEmpty) {
-      // Jeśli notatka jest pusta, wyświetl komunikat o błędzie
+      // obsluga pustej notatki
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Note cannot be empty!')),
       );
@@ -33,30 +32,27 @@ class _SaveNotesState extends State<SaveNotes> {
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Dodaj token w nagłówku
+          'Authorization': 'Bearer $token', // dodanie tokena w naglowku
         },
         body: jsonEncode({'note': noteText}),
       );
 
-      // Logowanie odpowiedzi serwera
+      // "logi"
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        // Zapisz notatkę lokalnie
         saveNoteLocally(noteText);
 
-        // Wyczyść pole tekstowe po zapisaniu
         setState(() {
-          noteController.clear();
+          noteController.clear(); // czyszczenie pola tekstowego po zapisaniu
         });
 
-        // Pokaż komunikat o sukcesie
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Note saved successfully!')),
         );
       } else {
-        // Obsługa błędu autoryzacji
+        // blad autoryzacji
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${response.statusCode}')),
         );
@@ -66,22 +62,18 @@ class _SaveNotesState extends State<SaveNotes> {
     }
   }
 
-  // Funkcja do pobrania tokena z SharedPreferences
   Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
     return token;
   }
 
-  // Funkcja do zapisywania notatki lokalnie
   Future<void> saveNoteLocally(String note) async {
     final prefs = await SharedPreferences.getInstance();
     final List<String> currentNotes = prefs.getStringList('notes') ?? [];
-
-    // Dodaj nową notatkę do listy
     currentNotes.add(note);
 
-    // Zapisz listę notatek z powrotem w SharedPreferences
+    // zapis listy notatek z powrotem w SharedPreferences
     await prefs.setStringList('notes', currentNotes);
   }
 

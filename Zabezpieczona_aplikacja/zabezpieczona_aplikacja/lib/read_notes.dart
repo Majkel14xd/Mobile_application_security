@@ -24,7 +24,7 @@ class _ReadNotesState extends State<ReadNotes> {
     fetchNotesFromServer();
   }
 
-  // Funkcja do uzyskania klienta HTTP z certyfikatem
+  // konfiguracja klienta http z SLL certificate pinning
   Future<IOClient> getClientWithCert() async {
     final certData =
         await DefaultAssetBundle.of(context).load('Certs/cert.pem');
@@ -46,14 +46,13 @@ class _ReadNotesState extends State<ReadNotes> {
     return IOClient(httpClient);
   }
 
-  // Funkcja do pobierania tokena z secure storage
+  // pobranie tokenu z secureStorage
   Future<String> _getToken() async {
     String? token = await _secureStorage.read(key: 'token');
     print('Token retrieved: $token');
     return token ?? '';
   }
 
-  // Funkcja do pobierania notatek z serwera
   Future<void> fetchNotesFromServer() async {
     final url = Uri.parse('https://192.168.100.117:5000/api/data');
     try {
@@ -92,29 +91,25 @@ class _ReadNotesState extends State<ReadNotes> {
     }
   }
 
-  // Funkcja do ładowania notatek lokalnych z secure storage
   Future<void> fetchNotesLocally() async {
-    String storedNotes = await _secureStorage.read(key: 'notes') ?? '[]';
+    String storedNotes = await _secureStorage.read(key: 'notes') ??
+        '[]'; //pobranie z secureStorage
     print('Fetched local notes: $storedNotes');
     setState(() {
       notes = List<String>.from(jsonDecode(storedNotes));
     });
   }
 
-  // Funkcja do synchronizacji notatek lokalnych z serwerem
+  //  synchronizacja notatek lokalnych z serwerem
   Future<void> syncLocalNotesWithServer(List<String> serverNotes) async {
-    // Sprawdzenie notatek lokalnych, które nie są na serwerze
+    // sprawdzenie notatek lokalnych, które nie są na serwerze i na odwrot
     List<String> localNotesNotOnServer =
         notes.where((note) => !serverNotes.contains(note)).toList();
-
     for (var note in localNotesNotOnServer) {
       await addNoteToServer(note);
     }
-
-    // Sprawdzenie notatek z serwera, które nie są lokalnie
     List<String> serverNotesNotOnDevice =
         serverNotes.where((note) => !notes.contains(note)).toList();
-
     setState(() {
       notes.addAll(serverNotesNotOnDevice);
     });
@@ -122,7 +117,6 @@ class _ReadNotesState extends State<ReadNotes> {
     await _secureStorage.write(key: 'notes', value: jsonEncode(notes));
   }
 
-  // Funkcja do dodawania notatki na serwer
   Future<void> addNoteToServer(String note) async {
     final token = await _getToken();
 
@@ -148,7 +142,6 @@ class _ReadNotesState extends State<ReadNotes> {
     }
   }
 
-  // Funkcja do usuwania notatki z serwera oraz lokalnie
   Future<void> deleteNoteFromServer(String note) async {
     final token = await _getToken();
 
@@ -163,12 +156,12 @@ class _ReadNotesState extends State<ReadNotes> {
       );
 
       if (response.statusCode == 200) {
-        // Usuwamy notatkę lokalnie po jej usunięciu z serwera
+        // po usunieciu z serwera usuwa lokalnie
         setState(() {
-          notes.remove(note); // Usuń notatkę z listy
+          notes.remove(note); // usuniecie z listy
         });
 
-        // Zaktualizuj secure storage po usunięciu notatki
+        // aktualizacja secureStorage po usunieciu
         String updatedNotes = jsonEncode(notes);
         await _secureStorage.write(key: 'notes', value: updatedNotes);
 
@@ -203,7 +196,6 @@ class _ReadNotesState extends State<ReadNotes> {
                     trailing: IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () {
-                        // Wywołaj funkcję usuwania notatki
                         deleteNoteFromServer(notes[index]);
                       },
                     ),
