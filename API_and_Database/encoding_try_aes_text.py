@@ -1,19 +1,21 @@
 import base64
+from xml.etree import ElementTree as ET
 
-# Zakodowane dane (nazwa klucza i wartość)
-key_encoded = "VGhpcyBpcyB0aGUga2V5IGZvciBhIHNlY3VyZSBzdG9yYWdlIEFFUyBLZXkK"
-value_encoded = (
-    "HcquUUyI/aRxkxyBntriO+vXL6qnLeK8zSmCASOsvp8p5afmLfAHpsDlRDBPx8cNc1ZoI/lQX5xG"
-    "hxTVRyMJBvBH+wQTgsgHVKfWLuPG5mmmxJy3zTR2Ag3df2IHbgBs9OQnb30E2w+TVCuPjHCPO/jZ"
-    "6gItjB1YO7MUqBPiY4exdMxGdZY7XECOyG25yheRQChL7q6POmQ7nhtm7r1E/mmiuNfhX0RbeqdD"
-    "5KF40Jqu84qElwf2XgwH3RdCmlptqLhLa1CoKfi2/VWwYbFV/y31rO/uK1sGotph0kMsIjHncjmh"
-    "0n29k6EZl4pLTWlTsQqzVu2XYb7u4J5LEG31bw=="
-)
+# Twój XML
+xml_data = '''<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+   <string name="VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg_token">rvDboOMIwNJyL2Ygi+mdxEjuswlNjH8CqEem4bsjdpPIryVe2fdDVB9+8V8mpQDyjjr1a+3R6TgD&#10;itnfWZ6J6Q==&#10;   
+     </string>
+</map>'''
 
-# Dekodowanie nazwy klucza
-key_decoded = base64.b64decode(key_encoded).decode("utf-8")
-print("Odczytana nazwa klucza:", key_decoded)
+# Parsowanie XML
+root = ET.fromstring(xml_data)
 
-# Dekodowanie wartości
-value_decoded = base64.b64decode(value_encoded).decode("utf-8", errors="ignore")
-print("Odczytana wartość:", value_decoded)
+# Pobieranie zakodowanego ciągu base64 za pomocą odpowiedniego atrybutu 'name'
+encoded_notes = root.find(".//string[@name='VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg_token']").text
+
+# Dekodowanie base64
+decoded_notes = base64.b64decode(encoded_notes)
+
+# Wyświetlanie zdekodowanych danych binarnych
+print(decoded_notes)

@@ -1,24 +1,21 @@
 import base64
-import json
+from xml.etree import ElementTree as ET
 
-# Zakodowany ciąg w Base64
-encoded_string = "VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIGxpc3QurO0ABXNyABNqYXZhLnV0aWwuQXJyYXlMaXN0eIHSHZnHYZ0DAAFJAARzaXpleHAAAAABdwQAAAAB\ndAANZHNhZGFzZHNhZGFzZHg="
-encoded_string = encoded_string.replace("\n", "")  # Usuń znak nowej linii
+# Twój XML
+xml_data = '''<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <string name="flutter.notes">VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIGxpc3QurO0ABXNyABNqYXZhLnV0aWwuQXJyYXlMaXN0eIHSHZnHYZ0DAAFJAARzaXpleHAAAAACdwQAAAAC&#10;dAAJTm90YXRrYSAxdAAJTm90YXRrYSAyeA==&#10;    </string>
+    <string name="flutter.token">9dec88f3-677e-4f22-83ea-de90f67070a8</string>
+</map>'''
 
-# Dekodowanie Base64
-decoded_bytes = base64.b64decode(encoded_string)
+# Parsowanie XML
+root = ET.fromstring(xml_data)
 
-# Wyodrębnienie części tekstowej i próba konwersji do JSON
-try:
-    # Konwersja bajtów na tekst
-    text_part = decoded_bytes.decode("utf-8", errors="ignore")
-    print("Dekodowany tekst:", text_part)
+# Pobieranie zakodowanego ciągu base64
+encoded_notes = root.find(".//string[@name='flutter.notes']").text
 
-    # Przykładowy JSON - dopasowanie danych ręcznie (jeśli struktura pozwala)
-    example_json = {
-        "message": "This is the prefix for a list.",
-        "data": "dsadasdsadasd"
-    }
-    print("Przykładowy JSON:", json.dumps(example_json, indent=4))
-except Exception as e:
-    print("Błąd:", e)
+# Dekodowanie base64
+decoded_notes = base64.b64decode(encoded_notes)
+
+# Wyświetlanie zdekodowanych danych binarnych
+print(decoded_notes)
